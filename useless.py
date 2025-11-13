@@ -1,25 +1,4 @@
-  # def display_board(self):
-    #     """
-    #     Displays the board in a user-friendly format
-    #     """
-    #     player_1_pits = self.board[self.p1_pits_index[0]: self.p1_pits_index[1]+1]
-    #     player_1_mancala = self.board[self.p1_mancala_index]
-    #     player_2_pits = self.board[self.p2_pits_index[0]: self.p2_pits_index[1]+1]
-    #     player_2_mancala = self.board[self.p2_mancala_index]
 
-    #     print('P1               P2')
-    #     print('     ____{}____     '.format(player_2_mancala))
-    #     for i in range(self.pits_per_player):
-    #         if i == self.pits_per_player - 1:
-    #             print('{} -> |_{}_|_{}_| <- {}'.format(i+1, player_1_pits[i], 
-    #                     player_2_pits[-(i+1)], self.pits_per_player - i))
-    #         else:    
-    #             print('{} -> | {} | {} | <- {}'.format(i+1, player_1_pits[i], 
-    #                     player_2_pits[-(i+1)], self.pits_per_player - i))
-            
-    #     print('         {}         '.format(player_1_mancala))
-    #     turn = 'P1' if self.current_player == 1 else 'P2'
-    #     print('Turn: ' + turn)
 
   # def play(self, pit):
   #         """
@@ -83,3 +62,61 @@
     #         if self.valid_move(pit):
     #             valid_pits.append(pit)
     #     return random.choice(valid_pits) if valid_pits else None
+    
+    
+    
+    
+# def run_mancala_trials(numTrials):
+#     moves_per_game = []
+#     p1_wins = 0
+#     p2_wins = 0
+#     ties = 0
+
+#     num_trials = numTrials
+
+#     for i in range(num_trials):
+
+#         game = Mancala(pits_per_player=6, stones_per_pit=4)
+
+#         p1_moves_played = 0
+#         p2_moves_played = 0
+
+#         while not game.winning_eval():
+#             if game.current_player == 1:
+#                 game.play(game.random_move_generator())
+#                 p1_moves_played += 1
+#             else:
+#                 game.play(game.random_move_generator())
+#                 p2_moves_played += 1
+        
+#         moves_per_game.append((p1_moves_played, p2_moves_played))
+
+#         if game.board[game.p1_mancala_index] > game.board[game.p2_mancala_index]:
+#             p1_wins += 1
+#         elif game.board[game.p1_mancala_index] < game.board[game.p2_mancala_index]:
+#             p2_wins += 1
+
+#     # # results
+
+#     p1_win_percentage = p1_wins / num_trials * 100
+#     p2_win_percentage = p2_wins / num_trials * 100
+
+#     p1_avg_moves = sum([x for (x,y) in moves_per_game]) / num_trials
+#     p2_avg_moves = sum([y for (x,y) in moves_per_game]) / num_trials
+
+#     print(f"Trials: {numTrials}")
+
+#     print("Player 1 Statistics:")
+#     print(f"Win percentage: %{p1_win_percentage}")
+#     print(f"Loss percentage: %{p2_win_percentage}")
+#     print(f"Tie percentage: %{100 - p1_win_percentage - p2_win_percentage}")
+#     print(f"Average # of moves: {p1_avg_moves}")
+
+#     print("")
+
+#     print("Player 2 Statistics:")
+#     print(f"Win percentage: %{p2_win_percentage}")
+#     print(f"Loss percentage: %{p1_win_percentage}")
+#     print(f"Tie percentage: %{100 - p1_win_percentage - p2_win_percentage}")
+#     print(f"Average # of moves: {p2_avg_moves}")
+# run_mancala_trials(100)
