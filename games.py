@@ -17,30 +17,32 @@ StochasticGameState = namedtuple('StochasticGameState', 'to_move, utility, board
 # MinMax Search
 
 
-def minmax_decision(state, game):
+def minmax_decision(state, game, depthLim = 3):
     """Given a state in a game, calculate the best move by searching
     forward all the way to the terminal states. [Figure 5.3]"""
 
     player = game.to_move(state)
 
-    def max_value(state):
-        if game.terminal_test(state):
+    def max_value(state, depthLimIn):
+        # print("MAX VAL " + str(depthLim))
+        if game.terminal_test(state) or depthLimIn <=0:
             return game.utility(state, player)
         v = -np.inf
         for a in game.actions(state):
-            v = max(v, min_value(game.result(state, a)))
+            v = max(v, min_value(game.result(state, a), depthLimIn-1))
         return v
 
-    def min_value(state):
-        if game.terminal_test(state):
+    def min_value(state, depthLimIn):
+        # print("MIN VAL " + str(depthLimIn))
+        if game.terminal_test(state) or depthLimIn <=0:
             return game.utility(state, player)
         v = np.inf
         for a in game.actions(state):
-            v = min(v, max_value(game.result(state, a)))
+            v = min(v, max_value(game.result(state, a), depthLimIn -1))
         return v
 
     # Body of minmax_decision:
-    return max(game.actions(state), key=lambda a: min_value(game.result(state, a)))
+    return max(game.actions(state), key=lambda a: min_value(game.result(state, a), depthLim))
 
 
 # ______________________________________________________________________________
@@ -86,30 +88,30 @@ def expect_minmax(state, game):
     return max(game.actions(state), key=lambda a: chance_node(state, a), default=None)
 
 
-def alpha_beta_search(state, game):
+def alpha_beta_search(state, game, depth_limit=5):
     """Search game to determine best action; use alpha-beta pruning.
     As in [Figure 5.7], this version searches all the way to the leaves."""
 
     player = game.to_move(state)
 
     # Functions used by alpha_beta
-    def max_value(state, alpha, beta):
-        if game.terminal_test(state):
+    def max_value(state, alpha, beta, depth):
+        if depth <= 0 or game.terminal_test(state):
             return game.utility(state, player)
         v = -np.inf
         for a in game.actions(state):
-            v = max(v, min_value(game.result(state, a), alpha, beta))
+            v = max(v, min_value(game.result(state, a), alpha, beta, depth - 1))
             if v >= beta:
                 return v
             alpha = max(alpha, v)
         return v
 
-    def min_value(state, alpha, beta):
-        if game.terminal_test(state):
+    def min_value(state, alpha, beta, depth):
+        if depth <= 0 or game.terminal_test(state):
             return game.utility(state, player)
         v = np.inf
         for a in game.actions(state):
-            v = min(v, max_value(game.result(state, a), alpha, beta))
+            v = min(v, max_value(game.result(state, a), alpha, beta, depth - 1))
             if v <= alpha:
                 return v
             beta = min(beta, v)
@@ -120,7 +122,7 @@ def alpha_beta_search(state, game):
     beta = np.inf
     best_action = None
     for a in game.actions(state):
-        v = min_value(game.result(state, a), best_score, beta)
+        v = min_value(game.result(state, a), best_score, beta, depth_limit)
         if v > best_score:
             best_score = v
             best_action = a
