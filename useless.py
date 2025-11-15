@@ -141,7 +141,7 @@ class Mancala(Game):
 
     def utility(self, state, player):
         """Return the value of this final state to player."""
-        if (state.to_move == "1"): return list(state.board)[self.p1_mancala_index] - list(state.board)[self.p2_mancala_index]
+        if (player == "1"): return list(state.board)[self.p1_mancala_index] - list(state.board)[self.p2_mancala_index]
         else: return list(state.board)[self.p2_mancala_index] - list(state.board)[self.p1_mancala_index]
 
     def result(self, state, move):
@@ -233,8 +233,8 @@ class Mancala(Game):
 
 
 # Run trials and collect statistics
-num_trials = 10000
-depth = 4
+num_trials = 100
+depth = 10
 
 score_diffs = []
 p1_wins = 0
@@ -262,7 +262,7 @@ print(f"Running {num_trials} trials with depth = {depth}...")
 # print(f"Player 1: Alpha-Beta | Player 2: Random\n")
 
 for i in range(num_trials):
-    mancala_game = Mancala(players = [random_player, random_player], depth=depth)
+    mancala_game = Mancala(players = [alpha_beta_player, random_player], depth=depth)
     result = mancala_game.play_game()
     
     score_diffs.append(result['score_diff'])
