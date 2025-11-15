@@ -1,0 +1,53 @@
+## Step 3: Random vs Random (100 games)
+**Win Statistics:**
+- Player 1 Wins: 48 (48.0%)
+- Player 2 Wins: 48 (48.0%)
+- Ties: 4 (4.0%)
+
+**Moves per Game:**
+- Average Total Moves: 44.29
+
+
+## Step 5: Minimax AI (Player 1) vs Random (Player 2) - 5 plies (100 games)
+**Win Statistics:**
+- AI (Player 1) Wins: 0 (0.0%)
+- Random (Player 2) Wins: 100 (100.0%)
+
+**Moves per Game:**
+- Average Total Moves: 37.91
+
+**Total Execution Time:** 00:00:52
+
+
+## Step 7: Alpha-Beta AI (Player 1) vs Random (Player 2) - 5 plies (100 games)
+**Win Statistics:**
+- AI (Player 1) Wins: 0 (0.0%)
+- Random (Player 2) Wins: 100 (100.0%)
+
+**Moves per Game:**
+- Average Total Moves: 38.99
+
+**Time per Game:** 
+- Total time: 00:00:06 for 100 games
+- Average per game: 0.06 seconds
+
+
+## Step 8: Alpha-Beta AI (Player 1) vs Random (Player 2) - 10 plies (100 games)
+**Win Statistics:**
+- AI (Player 1) Wins: 100 (100.0%)
+- Random (Player 2) Wins: 0 (0.0%)
+
+**Moves per Game:**
+- Average Total Moves: 33.48
+
+**Time per Game:**
+- Total time: 00:11:22 for 100 games
+- Average per game: 6.82 seconds
+
+**Speed Comparison (5-ply):**
+- Minimax at 5 plies: 00:00:52 (0.52 seconds/game)
+- Alpha-Beta at 5 plies: 00:00:06 (0.06 seconds/game)
+- **Speedup factor: 8.67x faster**
+
+**Projected Minimax at 10 plies:**
+- Estimated time: ~98 minutes (based on exponential growth from 5 to 10 plies)

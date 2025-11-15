@@ -171,18 +171,21 @@ class Mancala(Game):
             board[current_index] += 1
             stones -= 1
         
-        if current_index != my_mancala:
-            if my_pits_range[0] <= current_index <= my_pits_range[1] and board[current_index] == 1:
-                opposite_index = len(board) - 2 - current_index
-                if board[opposite_index] > 0:
-                    captured = board[current_index] + board[opposite_index]
-                    board[current_index] = 0
-                    board[opposite_index] = 0
-                    board[my_mancala] += captured
+        next_player = "2" if state.to_move == "1" else "1"
+    
+        # continuation rule
+        if current_index == my_mancala:
+            next_player = state.to_move
+        elif my_pits_range[0] <= current_index <= my_pits_range[1] and board[current_index] == 1:
+            opposite_index = len(board) - 2 - current_index
+            if board[opposite_index] > 0:
+                captured = board[current_index] + board[opposite_index]
+                board[current_index] = 0
+                board[opposite_index] = 0
+                board[my_mancala] += captured
         
         self.board = board.copy()
         
-        next_player = "2" if state.to_move == "1" else "1"
         return GameState(to_move=next_player, utility=0, board=tuple(board), moves=())
     
     def display(self):
@@ -234,7 +237,7 @@ class Mancala(Game):
 
 # Run trials and collect statistics
 num_trials = 100
-depth = 10
+depth = 5
 
 score_diffs = []
 p1_wins = 0
