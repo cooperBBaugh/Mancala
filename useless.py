@@ -1,21 +1,89 @@
 import random
+import sys
+import time # Import the time module
 random.seed()
-from games import *
+import numpy as np
+
+from games import Game, GameState
+
+def minmax_decision(state, game, depthLim = 3):
+    """Given a state in a game, calculate the best move by searching
+    forward all the way to the terminal states. [Figure 5.3]"""
+
+    player = game.to_move(state)
+
+    def max_value(state, depthLimIn):
+        if game.terminal_test(state) or depthLimIn <=0:
+            return game.utility(state, player)
+        v = -np.inf
+        for a in game.actions(state):
+            v = max(v, min_value(game.result(state, a), depthLimIn-1))
+        return v
+
+    def min_value(state, depthLimIn):
+        if game.terminal_test(state) or depthLimIn <=0:
+            return game.utility(state, player)
+        v = np.inf
+        for a in game.actions(state):
+            v = min(v, max_value(game.result(state, a), depthLimIn -1))
+        return v
+
+    return max(game.actions(state), key=lambda a: min_value(game.result(state, a), depthLim))
+
+
+def alpha_beta_search(state, game, depth_limit=10):
+    """Search game to determine best action; use alpha-beta pruning.
+    As in [Figure 5.7], this version searches all the way to the leaves."""
+
+    player = game.to_move(state)
+
+    def max_value(state, alpha, beta, depth):
+        if depth <= 0 or game.terminal_test(state):
+            return game.utility(state, player)
+        v = -np.inf
+        for a in game.actions(state):
+            v = max(v, min_value(game.result(state, a), alpha, beta, depth - 1))
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
+
+    def min_value(state, alpha, beta, depth):
+        if depth <= 0 or game.terminal_test(state):
+            return game.utility(state, player)
+        v = np.inf
+        for a in game.actions(state):
+            v = min(v, max_value(game.result(state, a), alpha, beta, depth - 1))
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+        return v
+
+    best_score = -np.inf
+    beta = np.inf
+    best_action = None
+    for a in game.actions(state):
+        v = min_value(game.result(state, a), best_score, beta, depth_limit)
+        if v > best_score:
+            best_score = v
+            best_action = a
+    return best_action
+
+def random_player(game, state, depth):
+    """A player that chooses a legal move at random."""
+    return random.choice(game.actions(state)) if game.actions(state) else None
+
+
+def alpha_beta_player(game, state, depth):
+    return alpha_beta_search(state, game, depth)
+
+
+def minmax_player(game,state, depth):
+    return minmax_decision(state,game, depth)
+
 
 class Mancala(Game):
-    def __init__(self, pits_per_player=6, stones_per_pit = 4):
-        """
-        The constructor for the Mancala class defines several instance variables:
-
-        pits_per_player: This variable stores the number of pits each player has.
-        stones_per_pit: It represents the number of stones each pit contains at the start of any game.
-        board: This data structure is responsible for managing the Mancala board.
-        current_player: This variable takes the value 1 or 2, as it's a two-player game, indicating which player's turn it is.
-        moves: This is a list used to store the moves made by each player. It's structured in the format (current_player, chosen_pit).
-        p1_pits_index: A list containing two elements representing the start and end indices of player 1's pits in the board data structure.
-        p2_pits_index: Similar to p1_pits_index, it contains the start and end indices for player 2's pits on the board.
-        p1_mancala_index and p2_mancala_index: These variables hold the indices of the Mancala pits on the board for players 1 and 2, respectively.
-        """
+    def __init__(self, players = [alpha_beta_player, random_player], pits_per_player=6, stones_per_pit = 4, depth = 5):
         self.pits_per_player = pits_per_player
         self.board = [stones_per_pit] * ((pits_per_player+1) * 2)
         
@@ -32,7 +100,12 @@ class Mancala(Game):
         self.initial = GameState(to_move = "1", utility = 0, board = self.board.copy(), moves=())
         self.state = self.initial
         
-        self.players = [minmax_player, random_player]
+        self.players = players
+        self.depth = depth
+        
+        # Track moves per player
+        self.p1_moves = 0
+        self.p2_moves = 0
 
     def valid_move(self, pit, state):
         """
@@ -47,7 +120,6 @@ class Mancala(Game):
             if pit_index < self.p2_pits_index[0] or pit_index > self.p2_pits_index[1]:
                 return False
         
-        # return self.board[pit_index] > 0
         return list(state.board)[pit_index] > 0
     
     def terminal_test(self, state):
@@ -65,7 +137,6 @@ class Mancala(Game):
         for pit in range(1, self.pits_per_player + 1):
             if (self.valid_move(pit, state)): 
                 val.append(pit)
-        # print(val)
         return val
 
     def utility(self, state, player):
@@ -109,7 +180,6 @@ class Mancala(Game):
                     board[opposite_index] = 0
                     board[my_mancala] += captured
         
-        # Update self.board for actual game display
         self.board = board.copy()
         
         next_player = "2" if state.to_move == "1" else "1"
@@ -124,43 +194,140 @@ class Mancala(Game):
         player_2_pits = self.board[self.p2_pits_index[0]: self.p2_pits_index[1]+1]
         player_2_mancala = self.board[self.p2_mancala_index]
 
-        print('P1               P2')
-        print('     ____{}____     '.format(player_2_mancala))
+        print('P1             P2')
+        print('      ____{}____     '.format(player_2_mancala))
         for i in range(self.pits_per_player):
             if i == self.pits_per_player - 1:
                 print('{} -> |_{}_|_{}_| <- {}'.format(i+1, player_1_pits[i], 
-                        player_2_pits[-(i+1)], self.pits_per_player - i))
-            else:    
+                                player_2_pits[-(i+1)], self.pits_per_player - i))
+            else:     
                 print('{} -> | {} | {} | <- {}'.format(i+1, player_1_pits[i], 
-                        player_2_pits[-(i+1)], self.pits_per_player - i))
+                                player_2_pits[-(i+1)], self.pits_per_player - i))
             
-        print('         {}         '.format(player_1_mancala))
+        print('          {}           '.format(player_1_mancala))
         turn = 'P1' if self.state.to_move == "1" else 'P2'
         print('Turn: ' + turn)
-          
+        
     def play_game(self):
         """Play an n-person, move-alternating game."""
         while True:
             if self.state.to_move == "1":
-                player = self.players[0]  # Player 1
+                player = self.players[0]
+                self.p1_moves += 1
             else:
-                player = self.players[1]  # Player 2
-            print("PLAYER b4")
-            print(player)
-            move = player(self, self.state)
+                player = self.players[1]
+                self.p2_moves += 1
+                
+            move = player(self, self.state, self.depth)
             self.state = self.result(self.state, move) 
-            print("PLAYER after")
-            print(player)
-            # self.display()
+            
             if self.terminal_test(self.state):
-                # self.display()
-                # self.display(self.state)
-                print(list(self.state.board)[self.p1_mancala_index] - list(self.state.board)[self.p2_mancala_index])
-                return list(self.state.board)[self.p1_mancala_index] - list(self.state.board)[self.p2_mancala_index]
+                score_diff = list(self.state.board)[self.p1_mancala_index] - list(self.state.board)[self.p2_mancala_index]
+                return {
+                    'score_diff': score_diff,
+                    'p1_moves': self.p1_moves,
+                    'p2_moves': self.p2_moves,
+                    'total_moves': self.p1_moves + self.p2_moves,
+                    'winner': 1 if score_diff > 0 else (2 if score_diff < 0 else 0)  # 0 = tie
+                }
 
-trials = []
-for i in range(100):
-  mancala_game = Mancala(pits_per_player=6, stones_per_pit=4)
-  trials.append(mancala_game.play_game())
 
-print(trials)
+# Run trials and collect statistics
+num_trials = 10000
+depth = 4
+
+score_diffs = []
+p1_wins = 0
+p2_wins = 0
+ties = 0
+p1_moves_list = []
+p2_moves_list = []
+total_moves_list = []
+
+# --- ETA Setup ---
+start_time = time.time()
+# The trial count after which we consider the speed calculation stable enough
+# to start showing ETA. (e.g., after 100 trials)
+ETA_CALC_THRESHOLD = 100 
+
+def format_time(seconds):
+    """Converts a time in seconds to a human-readable HH:MM:SS format."""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    sec = int(seconds % 60)
+    return f"{hours:02d}:{minutes:02d}:{sec:02d}"
+# -----------------
+
+print(f"Running {num_trials} trials with depth = {depth}...")
+# print(f"Player 1: Alpha-Beta | Player 2: Random\n")
+
+for i in range(num_trials):
+    mancala_game = Mancala(players = [random_player, random_player], depth=depth)
+    result = mancala_game.play_game()
+    
+    score_diffs.append(result['score_diff'])
+    p1_moves_list.append(result['p1_moves'])
+    p2_moves_list.append(result['p2_moves'])
+    total_moves_list.append(result['total_moves'])
+    
+    if result['winner'] == 1:
+        p1_wins += 1
+    elif result['winner'] == 2:
+        p2_wins += 1
+    else:
+        ties += 1
+
+    # --- Progress Bar and ETA Update ---
+    current_trials = i + 1
+    percent = current_trials / num_trials * 100
+    
+    progress_str = f"\rProgress: {current_trials}/{num_trials} trials run ({percent:.2f}%)"
+    
+    if current_trials >= ETA_CALC_THRESHOLD:
+        elapsed_time = time.time() - start_time
+        # Speed in trials per second
+        trials_per_second = current_trials / elapsed_time
+        
+        remaining_trials = num_trials - current_trials
+        # Estimated remaining time in seconds
+        eta_seconds = remaining_trials / trials_per_second
+        
+        eta_str = format_time(eta_seconds)
+        elapsed_str = format_time(elapsed_time)
+        
+        # Add ETA and Elapsed Time to the progress string
+        progress_str += f" | Elapsed: {elapsed_str} | ETA: {eta_str}"
+
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
+    # -----------------------------------
+
+# Print a final newline character to ensure the following output starts on a new line
+print()
+
+# Print results
+print("============================================================")
+print("TRIAL RESULTS")
+print("============================================================")
+print(f"\nTotal Games Played: {num_trials}")
+print(f"\nWin Statistics:")
+print(f"  Player 1 Wins: {p1_wins} ({p1_wins/num_trials*100:.1f}%)")
+print(f"  Player 2 Wins:      {p2_wins} ({p2_wins/num_trials*100:.1f}%)")
+print(f"  Ties:               {ties} ({ties/num_trials*100:.1f}%)")
+
+print(f"\nScore Difference Statistics (P1 - P2):")
+print(f"  Total Sum:      {sum(score_diffs)}")
+print(f"  Average:        {np.mean(score_diffs):.2f}")
+print(f"  Std Dev:        {np.std(score_diffs):.2f}")
+print(f"  Min:            {min(score_diffs)}")
+print(f"  Max:            {max(score_diffs)}")
+
+print(f"\nMoves Statistics:")
+print(f"  Average P1 Moves per Game:     {np.mean(p1_moves_list):.2f}")
+print(f"  Average P2 Moves per Game:     {np.mean(p2_moves_list):.2f}")
+print(f"  Average Total Moves per Game: {np.mean(total_moves_list):.2f}")
+print(f"  Total P1 Moves (all games):    {sum(p1_moves_list)}")
+print(f"  Total P2 Moves (all games):    {sum(p2_moves_list)}")
+print(f"  Total Moves (all games):       {sum(total_moves_list)}")
+
+print("============================================================")
