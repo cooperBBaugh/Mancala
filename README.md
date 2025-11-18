@@ -1,3 +1,3 @@
 # Mancala
 
-test
+Cooper Baugh and Gavin Petruzzi
